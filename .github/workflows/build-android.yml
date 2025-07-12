@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up Java 17
@@ -19,7 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Install Node.js
+    - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
@@ -27,17 +27,17 @@ jobs:
     - name: Install Cordova CLI
       run: npm install -g cordova
 
-    - name: Install project dependencies
+    - name: Install dependencies
       run: npm install
 
     - name: Add Android platform
       run: cordova platform add android
 
-    - name: Build Android APK
+    - name: Build APK (release)
       run: cordova build android --release
 
-    - name: Upload release APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: Pushtina-APK
+        name: pushtina-release-apk
         path: platforms/android/app/build/outputs/apk/release/app-release.apk
