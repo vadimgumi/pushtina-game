@@ -1,20 +1,23 @@
 name: Build Android APK
+
 on:
   push:
     branches:
-      - main
+      - main  # Твоя основная ветка
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
-        java-version: '17'  # Обновили до нужной версии
+        java-version: '11'
 
     - name: Install Node.js
       uses: actions/setup-node@v3
@@ -24,16 +27,22 @@ jobs:
     - name: Install Cordova CLI
       run: npm install -g cordova
 
-    - name: Install dependencies
+    - name: Install project dependencies
       run: npm install
 
-    - name: Build Android APK
+    - name: Ensure Android platform added
       run: |
-        cordova platform add android || true
-        cordova build android --release
+        cordova platform rm android || true
+        cordova platform add android
+
+    - name: Build Android APK
+      run: cordova build android --release
+
+    - name: List files after build
+      run: ls -R platforms/android/app/build/outputs/apk/
 
     - name: Upload APK artifact
-      uses: actions/upload-artifact@v4  # ⬅️ Обновили до v4
+      uses: actions/upload-artifact@v4
       with:
         name: app-release.apk
         path: platforms/android/app/build/outputs/apk/release/app-release.apk
