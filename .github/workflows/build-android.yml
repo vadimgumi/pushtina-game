@@ -3,14 +3,14 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main
+      - main  # или ваша основная ветка
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up Java 17
@@ -27,22 +27,22 @@ jobs:
     - name: Install Cordova CLI
       run: npm install -g cordova
 
-    - name: Install project dependencies
+    - name: Install dependencies
       run: npm install
 
-    - name: Ensure Android platform added
+    - name: Add Android platform (if not added)
       run: |
-        cordova platform rm android || true
-        cordova platform add android
+        cordova platform add android || echo "Android platform already added"
 
-    - name: Build Android APK
-      run: cordova build android --release -- --packageType=apk
+    - name: Build Android APK (release)
+      run: cordova build android --release
 
-    - name: List built APKs
-      run: ls -R platforms/android/app/build/outputs/apk/
+    - name: Show generated APK files
+      run: find platforms/android/app/build/outputs/apk -type f -name "*.apk" || echo "APK files not found"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release.apk
+        name: app-release-apk
         path: platforms/android/app/build/outputs/apk/release/app-release.apk
+        if-no-files-found: warn
