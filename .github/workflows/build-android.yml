@@ -36,12 +36,12 @@ jobs:
         cordova platform add android
 
     - name: Build Android APK
-      run: cordova build android --release
+      run: cordova build android --release -- --packageType=apk
 
-    - name: List files after build
+    - name: List built APKs
       run: ls -R platforms/android/app/build/outputs/apk/
 
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-release.apk
