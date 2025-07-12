@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Поймай Пуштина</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game">
+    <h1>🎯 Поймай Пуштина</h1>
+
+    <div id="quote-box">
+      <p id="quote-text">Загрузка цитаты...</p>
+      <div class="buttons">
+        <button onclick="answer(true)">🟢 Правда</button>
+        <button onclick="answer(false)">🔴 Враньё</button>
+      </div>
+      <p id="result"></p>
+      <button id="next-btn" onclick="nextQuote()">Дальше</button>
+    </div>
+
+    <p id="score">Очки: 0</p>
+
+    <button id="sound-toggle">🔊</button>
+    <button id="restart-button" style="display: none;">🔄 Играть снова</button>
+
+    <!-- фоновая музыка -->
+    <audio id="background-music" src="audio/pepsee-vovochka.mp3" loop></audio>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
