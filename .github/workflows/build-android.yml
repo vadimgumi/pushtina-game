@@ -19,7 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Set up Node.js
+    - name: Install Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
@@ -30,14 +30,16 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Add Android platform
-      run: cordova platform add android
+    - name: Build Android APK
+      run: |
+        cordova platform add android || true
+        cordova build android --release
 
-    - name: Build APK (release)
-      run: cordova build android --release
+    - name: List APK directory contents
+      run: ls -R platforms/android/app/build/outputs/apk/
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: pushtina-release-apk
+        name: app-release.apk
         path: platforms/android/app/build/outputs/apk/release/app-release.apk
