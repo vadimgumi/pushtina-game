@@ -1,57 +1,60 @@
-name: Build and Sign APK
+name: Android Build & Sign
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+env:
+  ANDROID_SDK_ROOT: /home/runner/android-sdk
+  JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
 
 jobs:
   build:
-    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 17
+    - name: Decode keystore
+      run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
-      - name: Install Cordova
-        run: npm install -g cordova
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
 
-      - name: Build Cordova APK
-        run: |
-          cordova platform add android
-          cordova build android --release
+    - name: Check Gradle version
+      run: ./platforms/android/gradlew --version
 
-      - name: Sign APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore keystore.jks \
-            -storepass $KEYSTORE_PASSWORD \
-            -keypass $KEY_PASSWORD \
-            platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk \
-            $KEY_ALIAS
+    - name: Install dependencies
+      run: npm install
 
-      - name: Align APK
-        run: |
-          sudo apt-get update && sudo apt-get install -y zipalign
-          zipalign -v 4 platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk app-release-signed.apk
+    - name: Build Android Release
+      run: ./platforms/android/gradlew assembleRelease
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: signed-apk
-          path: app-release-signed.apk
+    - name: Sign APK
+      run: |
+        jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+          -keystore keystore.jks -storepass ${{ secrets.KEYSTORE_PASSWORD }} \
+          -keypass ${{ secrets.KEY_PASSWORD }} \
+          ./platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk ${{ secrets.KEY_ALIAS }}
+
+    - name: Align APK
+      run: |
+        zipalign -v -p 4 \
+          ./platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk \
+          ./pushtina-game-release.apk
+
+    - name: Upload signed APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: pushtina-game-release.apk
+        path: pushtina-game-release.apk
 
