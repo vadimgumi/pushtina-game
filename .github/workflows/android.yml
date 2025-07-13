@@ -1,0 +1,57 @@
+name: Build and Sign APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+      - name: Build Cordova APK
+        run: |
+          cordova platform add android
+          cordova build android --release
+
+      - name: Sign APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore keystore.jks \
+            -storepass $KEYSTORE_PASSWORD \
+            -keypass $KEY_PASSWORD \
+            platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk \
+            $KEY_ALIAS
+
+      - name: Align APK
+        run: |
+          sudo apt-get update && sudo apt-get install -y zipalign
+          zipalign -v 4 platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk app-release-signed.apk
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: signed-apk
+          path: app-release-signed.apk
+
